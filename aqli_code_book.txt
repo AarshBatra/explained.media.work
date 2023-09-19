@@ -1,0 +1,25 @@
+AQLI Data Dictionary
+===================================
+
+
+objectid_gadmx: Unique identifier for the dataset. "x" corresponds to the level of file in question. For example, x = 2, for gadm2, 1 for gadm1.
+
+iso_alpha3: 3 character unique country code
+
+country: country name 
+
+name_1: state name
+
+name_2: district name
+
+population: population of the "name_2" region in question. This population is satellite derived and our source for this data is landscan: https://landscan.ornl.gov/
+
+whostandard: WHO PM2.5 annual average guideline (in micrograms per cubic meter)
+
+natstandard: National PM2.5 annual average standard (in micrograms per cubic meter)
+
+pmxxxx: population weighted annual average pm2.5 for year "xxxx" (from 1998 to 2021)
+
+llpp_who_xxxx: Average life years lost in year "xxxx" as a result of not being compliant with the WHO PM2.5 annual average guideline of 5 micrograms per cubic meter (from 1998 to 2021).
+
+llpp_nat_xxxx: Average life years lost in year "xxxx" as a result of not being compliant with the country's National PM2.5 annual average standard (from 1998 to 2021).

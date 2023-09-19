@@ -17,157 +17,28 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 
-## Story 1: Understanding the state of global air quality data and research infrastructure
+## Story 1: Understanding the state of global air quality data, research and funding infrastructure
 
+* All code for the story can be found in the `global.air.quality.infra.story.Rmd` script at the root of this repo. Each story corresponds to a one Rmd and each chunk of any given Rmd corresponds to one visualization, within a given story.
+* The helper script for the code can be found in the `R/` folder at the root.
+* The datasets used in the code are not pushed to GitHub due to space limitations. Those can be downloaded from the following [drive folder](https://drive.google.com/drive/folders/18RnLiSeRdXKAe8EIZhLjbjxxYELpZj6u?usp=drive_link). Read notes on the datasets below.
 
-### Part 1: How much longer can you live if you breathed clean air? - Air Quality Life Index
+* Notes on data files present in the drive folder above:
 
-```{r eval=FALSE, include=FALSE}
-
-# libraries
-library(extrafont)
-library(ggtext)
-library(viridis)
-
-# Define the target projection (Equal Earth - EPSG:8857)
-equal_earth_proj <- "+proj=eqearth +datum=WGS84 +wktext"
-
-# converting AQLI shapefiles to a Equal Earth Projection
-gadm2_aqli_2021_shp <- st_transform(gadm2_aqli_2021_shp, equal_earth_proj)
-gadm1_aqli_2021_shp <- st_transform(gadm1_aqli_2021_shp, equal_earth_proj)
-gadm0_aqli_2021_shp <- st_transform(gadm0_aqli_2021_shp, equal_earth_proj)
-
-# figuring out the objectids for gadm1 for which population is not available
-obid_gadm1_pop_na <- gadm1_aqli_2021 %>% 
-  filter(is.na(population)) %>%
-  select(objectid_gadm1) %>% 
-  unlist() %>%
-  as.vector()
-
-# figuring out the objectids for gadm0 for which population is not available
-obid_gadm0_pop_na <- gadm0_aqli_2021 %>% 
-  filter(is.na(population)) %>%
-  select(objectid_gadm0) %>%
-  unlist() %>%
-  as.vector()
-
-
-# global shapefile gadm2 map data
-aqli_global_gadm2_data <- gadm2_aqli_2021 %>%
-  left_join(gadm2_aqli_2021_shp, by = c("objectid_gadm2" = "obidgadm2")) %>%
-  add_aqli_color_scale_buckets("lyl", "llpp_who_2021") %>%
-  select(-geometry, geometry) %>%
-  st_as_sf()
-
-# removing extremely tiny polygons to focus on the main map
-
-aqli_global_gadm2_data$area <- st_area(aqli_global_gadm2_data)
-
-# minimum area threshold for the polygons
-threshold <- 10000000 # units are m^2
-
-# adding a "area without units" column
-aqli_global_gadm2_data <- aqli_global_gadm2_data %>% 
-  mutate(area_without_units = as.numeric(str_remove(area, " [m^2]"))) 
-
-aqli_global_gadm2_data <- aqli_global_gadm2_data %>%
-  filter(area_without_units > threshold) 
-
-# filter out small island regions from all gadm shapefiles
-aqli_global_gadm2_data <- aqli_global_gadm2_data %>%
-  filter(country %notin% c("Samoa", "American Samoa", "French Polynesia", "Fiji", 
-                           "Tonga", "Niue", "Cook Islands", "Vanuatu", "Solomon Islands", 
-                           "Vanuatu", "New Caledonia", "Marshall Islands", "Micronesia", 
-                           "French Southern Territories", "Saint Helena, Ascension and Tris")) %>%
-  filter(!((country  == "New Zealand") & (name_1 == "Galápagos"))) %>%
-  filter(!((country  == "United States") & (name_1 == "Hawaii"))) %>%
-  filter(!is.na(population)) 
-
-gadm1_aqli_2021_shp <- gadm1_aqli_2021_shp %>%
-  filter(name0 %notin% c("Samoa", "American Samoa", "French Polynesia", "Fiji", 
-                           "Tonga", "Niue", "Cook Islands", "Vanuatu", "Solomon Islands", 
-                           "Vanuatu", "New Caledonia", "Marshall Islands", "Micronesia", 
-                           "French Southern Territories", "Saint Helena, Ascension and Tris")) %>%
-  filter(!((name0  == "New Zealand") & (name1 == "Galápagos"))) %>%
-  filter(!((name0  == "United States") & (name1 == "Hawaii"))) %>%
-  filter(obidgadm1 %notin% obid_gadm1_pop_na) 
-
-gadm0_aqli_2021_shp <- gadm0_aqli_2021_shp %>%
-  filter(name0 %notin% c("Samoa", "American Samoa", "French Polynesia", "Fiji", 
-                           "Tonga", "Niue", "Cook Islands", "Vanuatu", "Solomon Islands", 
-                           "Vanuatu", "New Caledonia", "Marshall Islands", "Micronesia", 
-                           "French Southern Territories", "Saint Helena, Ascension and Tris")) %>%
-  filter(obidgadm0 %notin% obid_gadm0_pop_na) 
-
-
-# creating a tibble for text boxes annotation positions and labels in order: LA, Delhi, Ouest(Cameroon), Melbourne (Australia), Lima (Peru), Warsaw (Poland)
-tb_annotation <- tibble(
-  label_x = c(-142.07, 64.83, -9, 124.05, -87.72, -32.66),
-  label_y = c(18.11, 6, -0.54, -49.09, -20.34, 40.04),
-  text = c("**Los Angeles (US)**, 0.65 years = 7.8 months",
-           "**Delhi (India)**, 11.9 years", 
-           "**Ouest (Cameroon)**, 4.5 years", 
-            "**Melbourne (Australia)** is in compliance with the WHO PM2.5 guideline of 5 µg/m³", 
-            "**Lima (Peru)**, 2.3 years", 
-            "**Warsaw (Poland)**, 1.2 years"))
-
-
-# global map
-aqli_global_gadm2_map <- aqli_global_gadm2_data %>%
-  # filter(country == "Poland") %>%
-  ggplot() +
-  geom_sf(mapping = aes(fill = forcats::fct_reorder(lyl_bucket, order_lyl_bucket)), color = "transparent", lwd = 0) +
-   geom_sf(data = gadm1_aqli_2021_shp, color = "transparent", fill = "transparent", lwd = 0) +
- geom_sf(data = gadm0_aqli_2021_shp, color = "aliceblue", fill = "transparent", lwd = 0.3) +
-   scale_fill_manual(values = c("0 to < 0.1" = "#ffffff", 
-                               "0.1 to < 0.5" = "#ffeda0", 
-                               "0.5 to < 1" = "#fed976", 
-                               "1 to < 2" = "#feb24c", 
-                               "2 to < 3" = "#fd8d3c", 
-                               "3 to < 4" = "#fc4e2a", 
-                               "4 to < 5" = "#e31a1c", 
-                               "5 to < 6" = "#bd0026", 
-                               ">= 6" = "#800026")) +
-    geom_textbox(data = tb_annotation, aes(x = label_x, y = label_y, label = text),
-               colour = "white",
-               box.colour = "#022531",
-               fill = NA,
-               family = "Segoe UI",
-               size = 6.5) +
-    #geom_curve(x = -118.25, xend = -134, y = 34.09, yend = 23.2, color = "white", arrow = arrow(), curvature = 0.5) +
- annotate("segment", x = -118.25, xend = -134, y = 34.09, yend = 23.2, arrow = arrow(type = "closed", length = unit(0.2, "inches")), colour = "white", curvature  = 1.8) + # US
- annotate("segment", x = 77.14, xend = 65.09, y = 28.68, yend = 11.82, arrow = arrow(type = "closed", length = unit(0.2, "inches")), colour = "white", curvature  = -0.5) +
- annotate("curve", x = 10.18, xend = -12.28, y = 5.5, yend = -20.96, arrow = arrow(type = "closed", length = unit(0.2, "inches")), colour = "white", curvature  = -0.5) +
- annotate("segment", x = 144.97, xend = 131.18, y = -37.97, yend = -41.01, arrow = arrow(type = "closed", length = unit(0.2, "inches")), colour = "white", curvature  = -0.5) +
- annotate("segment", x = -77.03, xend = -82.74, y = -12.02, yend = -16.39, arrow = arrow(type = "closed", length = unit(0.2, "inches")), colour = "white", curvature  = 1.8) +
-annotate("segment", x = 21.03, xend = -19.7, y = 52.24, yend = 40.51, arrow = arrow(type = "closed", length = unit(0.2, "inches")), colour = "white", curvature  = 0.5) +
-      coord_sf(default_crs = sf::st_crs(4326)) +
-  ggthemes::theme_map() +
-labs(title = "How much longer can you live if you breathed clean air?",
-     subtitle = expression("Years gained if pollution is reduced to meet the WHO" ~ PM[2.5] ~ "guideline"),
-caption = "Source · Air Quality Life Index, Annual Report 2023") + 
-  theme(legend.position = c(0.55, 0.99), 
-        legend.background = element_rect(fill = "#022531"), 
-        legend.text = element_text(color = "white", face = "bold" , size = 21), 
-        plot.background = element_rect(colour = "#022531",
-                                       fill = "#022531"), 
-        plot.caption = element_text(size = 15, hjust = 0.5, color = "white"), 
-        plot.title = element_text(size = 35, family = "Segoe UI", face = "bold", color = "white", hjust = 0.05, 
-                                  margin = margin(b = 0.5, unit = "cm")),
-        plot.subtitle = element_text(size = 22, family = "Segoe UI", face = "italic", color = "white", hjust = 0.05),
-        legend.spacing.x = unit(1.5, "lines")) +
-       # legend.margin = margin(b = 1, unit = "cm")) +
-guides(fill = guide_legend(
-    keywidth = unit(2, "lines"),  # Adjust key width
-    keyheight = unit(2, "lines"),  # Adjust key height
-    label.position = "bottom",  # Position labels below keys
-    label.hjust = 0.5,  # Center labels horizontally
-    label.vjust = 1,  # Adjust vertical positioning of labels
-    nrow = 1, 
-    shape = guide_legend(override.aes = list(shape = 19))
-  )) 
-
-ggsave("map.png", aqli_global_gadm2_map, width = 17, height = 9, dpi = 320, scale = 2)
+  * There are 3 final processed files that come out of the AQLI data pipeline. Each of these files contain **population weighted annual average PM2.5** data and corresponding life years lost (or potential gains in life expectancy: see the last point) data at country (gadm0 file), state (gadm1 file) and district/county (gadm2 file). These are present in the `final processed CSVs` sub-folder in the drive folder above.
   
 
-```
+  * Corresponding to the 3 files above there are 3 shapefiles, which can be found in the `shapefiles` sub-folder.
+  
+  * Apart from this, there are couple other files that the helper script loads, all of which are also present in the folder above.
+  * The helper script loads the [aqverse](https://github.com/aqli-epic/aqverse) pacakge, which is used in the plotting code.
+  
+  * The code book for AQLI datasets is uploaded as a text file named `aqli_code_book` at the root of this repo.
+  
+  * All AQLI pollution data is measured in micrograms per cubic meter.
+  
+  * The AQLI data story can be told in 2 ways that convey the same message and a mix of both are used in the [AQLI Annual Report 2023](https://aqli.epic.uchicago.edu/reports/). Here is an example of Delhi, India:
+  
+    * Potential gains in years of life expectancy for a Delhi resident is 11.9 years if WHO PM2.5 guideline is met (default for the the [AQLI interactive map](https://aqli.epic.uchicago.edu/the-index/) and the data visualization in the output folder of this repo).
+    * An average Delhi resident is losing 11.9 years of life as a result sustained long term exposure to breathing air that is not in compliance with the WHO guideline.
+  
