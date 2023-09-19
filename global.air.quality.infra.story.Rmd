@@ -165,7 +165,9 @@ guides(fill = guide_legend(
     shape = guide_legend(override.aes = list(shape = 19))
   )) 
 
-ggsave(paste0(here(), "/output/aqli_intro_map_without_legend.png"), aqli_global_gadm2_map, width = 17, height = 9, dpi = 320, scale = 2)
+# ggsave(paste0(here(), "/output/aqli_intro_map_without_legend.png"), aqli_global_gadm2_map, width = 17, height = 9, dpi = 320, scale = 2)
+ 
+# ggsave(paste0(here(), "/output/aqli_intro_map_with_legend.png"), aqli_global_gadm2_map, width = 17, height = 9, dpi = 320, scale = 2)
   
 
 ```

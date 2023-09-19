@@ -21,6 +21,9 @@
   folder](https://drive.google.com/drive/folders/18RnLiSeRdXKAe8EIZhLjbjxxYELpZj6u?usp=drive_link).
   Read notes on the datasets below.
 
+- Visualizations are stored in the `output/` folder at the root of the
+  repo.
+
 - Notes on data files present in the drive folder above:
 
   - There are 3 final processed files that come out of the AQLI data

@@ -20,8 +20,12 @@ knitr::opts_chunk$set(
 ## Story 1: Understanding the state of global air quality data, research and funding infrastructure
 
 * All code for the story can be found in the `global.air.quality.infra.story.Rmd` script at the root of this repo. Each story corresponds to a one Rmd and each chunk of any given Rmd corresponds to one visualization, within a given story.
+
 * The helper script for the code can be found in the `R/` folder at the root.
+
 * The datasets used in the code are not pushed to GitHub due to space limitations. Those can be downloaded from the following [drive folder](https://drive.google.com/drive/folders/18RnLiSeRdXKAe8EIZhLjbjxxYELpZj6u?usp=drive_link). Read notes on the datasets below.
+
+* Visualizations are stored in the `output/` folder at the root of the repo. 
 
 * Notes on data files present in the drive folder above:
 
