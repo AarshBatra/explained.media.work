@@ -104,7 +104,7 @@ tb_annotation <- tibble(
   text = c("**Los Angeles (US)**, 0.65 years = 7.8 months",
            "**Delhi (India)**, 11.9 years", 
            "**Ouest (Cameroon)**, 4.5 years", 
-            "**Melbourne (Australia)** is in compliance with the WHO PM2.5 guideline of 5 µg/m³", 
+            "**Melbourne (Australia)** is in compliance with the WHO PM₂.₅ guideline of 5 µg/m³", 
             "**Lima (Peru)**, 2.3 years", 
             "**Warsaw (Poland)**, 1.2 years"))
 
@@ -141,9 +141,10 @@ annotate("segment", x = 21.03, xend = -19.7, y = 52.24, yend = 43, arrow = arrow
       coord_sf(default_crs = sf::st_crs(4326)) +
   ggthemes::theme_map() +
 labs(title = "How much longer can you live if you breathed clean air?",
-     subtitle = expression("Life years gained if 2021 pollution is reduced to meet the WHO" ~ PM[2.5] ~ "guideline"),
-caption = "Source · Air Quality Life Index (EPIC), Annual Report 2023") + 
-  theme(legend.position = "none", 
+     subtitle = expression("Life expectancy gains, if 2021" ~ PM[2.5] ~ "pollution is reduced to meet the WHO" ~ PM[2.5] ~ "guideline"),
+     fill = "Potential gain in life expectancy (years)",
+caption = expression("Source · Air Quality Life Index, Annual Report 2023 | Graphic · explained.media")) + 
+  theme(legend.position = c(0.6, 0.98), 
         legend.background = element_rect(fill = "#022531"), 
         legend.text = element_text(color = "white", face = "bold" , size = 21), 
         plot.background = element_rect(colour = "#022531",
@@ -153,7 +154,8 @@ caption = "Source · Air Quality Life Index (EPIC), Annual Report 2023") +
                                   margin = margin(b = 0.5, unit = "cm")),
         plot.subtitle = element_text(size = 22, family = "Segoe UI", face = "italic", color = "white", hjust = 0.03, 
                                      margin = margin(b = 0.5, unit = "cm")),
-        legend.spacing.x = unit(1.5, "lines")) +
+        legend.spacing.x = unit(1.5, "lines"), 
+        legend.title = element_text(color = "white", hjust = 0.5, size = 25, family = "Segoe UI")) +
        # legend.margin = margin(b = 1, unit = "cm")) +
 guides(fill = guide_legend(
     keywidth = unit(2, "lines"),  # Adjust key width
@@ -165,9 +167,8 @@ guides(fill = guide_legend(
     shape = guide_legend(override.aes = list(shape = 19))
   )) 
 
-# ggsave(paste0(here(), "/output/aqli_intro_map_without_legend.png"), aqli_global_gadm2_map, width = 17, height = 9, dpi = 320, scale = 2)
- 
-# ggsave(paste0(here(), "/output/aqli_intro_map_with_legend.png"), aqli_global_gadm2_map, width = 17, height = 9, dpi = 320, scale = 2)
+
+ggsave(paste0(here(), "/output/aqli_intro_map.png"), aqli_global_gadm2_map, width = 17, height = 9, dpi = 320, scale = 2)
   
 
 ```
