@@ -219,7 +219,8 @@ pm2.5_comparison_oth_threats_data <- pm2.5_comparison_oth_threats_data %>%
 f1 <- "Rubik"
 
 pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
-  mutate(llpp_who_2021 = round(llpp_who_2021, 1)) %>%
+  mutate(llpp_who_2021 = round(llpp_who_2021, 1), 
+         cause_of_death = ifelse(cause_of_death == "PM2.5 relative to WHO guideline", "PM₂.₅ relative to WHO guidline", cause_of_death)) %>%
   ggplot(mapping = aes(x = forcats::fct_reorder(cause_of_death, llpp_who_2021), y = llpp_who_2021)) + 
   geom_blank() +
   #     annotate("segment", y = c(0.25, 0.75, 1.25), yend = c(0.25, 0.75, 1.25), x = 0, xend = 9,
