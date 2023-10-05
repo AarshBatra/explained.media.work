@@ -111,11 +111,11 @@ tb_annotation <- tibble(
 
 # global AQLI map for explained.media website
 aqli_global_gadm2_map <- aqli_global_gadm2_data %>%
-  # filter(country == "Poland") %>%
+  filter(continent == "Africa") %>%
   ggplot() +
   geom_sf(mapping = aes(fill = forcats::fct_reorder(lyl_bucket, order_lyl_bucket)), color = "transparent", lwd = 0) +
-   geom_sf(data = gadm1_aqli_2021_shp, color = "transparent", fill = "transparent", lwd = 0) +
- geom_sf(data = gadm0_aqli_2021_shp, color = "aliceblue", fill = "transparent", lwd = 0.3) +
+   geom_sf(data = gadm1_aqli_2021_shp %>% filter(continent == "Africa"), color = "transparent", fill = "transparent", lwd = 0) +
+ geom_sf(data = gadm0_aqli_2021_shp %>% filter(continent == "Africa"), color = "aliceblue", fill = "transparent", lwd = 0.3) +
    scale_fill_manual(values = c("0 to < 0.1" = "#ffffff", 
                                "0.1 to < 0.5" = "#ffeda0", 
                                "0.5 to < 1" = "#fed976", 
@@ -214,13 +214,13 @@ pm2.5_comparison_oth_threats_data <- pm2.5_comparison_oth_threats_data %>%
 
 
 
-# ar_fig1.1 plot
+# pm2.5 compared to other health threats plot
 
 f1 <- "Rubik"
 
 pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
   mutate(llpp_who_2021 = round(llpp_who_2021, 1), 
-         cause_of_death = ifelse(cause_of_death == "PM2.5 relative to WHO guideline", "PM₂.₅ relative to WHO guidline", cause_of_death)) %>%
+         cause_of_death = ifelse(cause_of_death == "PM2.5 relative to WHO guideline", "PM₂.₅ relative to WHO guideline", cause_of_death)) %>%
   ggplot(mapping = aes(x = forcats::fct_reorder(cause_of_death, llpp_who_2021), y = llpp_who_2021)) + 
   geom_blank() +
   #     annotate("segment", y = c(0.25, 0.75, 1.25), yend = c(0.25, 0.75, 1.25), x = 0, xend = 9,
@@ -229,7 +229,8 @@ pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
 #   geom_hline(mapping = aes(yintercept = 0.75), color = "#0C475F", linetype = "solid") +
 #   geom_hline(mapping = aes(yintercept = 1.25), color = "#0C475F", linetype = "solid") +
   geom_col(mapping = aes(fill = forcats::fct_reorder(lyl_bucket, order_lyl_bucket)), width = 0.4, color = "white") +
-  geom_text(aes(label = llpp_who_2021, y = (llpp_who_2021 - 0.085)), hjust = 0, color = "#663300", size = 10, family = f1) +
+  geom_text(aes(label = llpp_who_2021, y = (llpp_who_2021 - 0.085)), hjust = 0.1, color = "#663300", size = 10, family = f1, 
+            fontface = "bold") +
   labs(x = "", y = "Life years lost", fill = "Life years lost", 
        title = expression("How does" ~ PM[2.5] ~ "compare with other heath threats?"), 
        caption = "Sources · Air Quality Life Index, Annual Report 2023; Global Burden of Disease; WHO life tables | Graphic · explained.media") +
@@ -258,7 +259,7 @@ pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
                                      margin = margin(b = 0.5, unit = "cm")),
         legend.spacing.x = unit(1.5, "lines"), 
         legend.title = element_text(color = "white", hjust = 0.5, size = 15, family = "Segoe UI"), 
-        axis.text.y = element_text(color = c("PM2.5 relative to WHO guideline" = "#FFFFFF", 
+        axis.text.y = element_text(color = c("PM₂.₅ relative to WHO guideline" = "#FFFFFF", 
                                              "Tobacco" = "#FFE6B3", 
                                              "Child and maternal malnutrition" = "#FFE6B3", 
                                              "Alcohol use" = "#FFE6B3", 
@@ -268,22 +269,22 @@ pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
                                              "Neglected tropical diseases and malaria" = "#FF9600", 
                                              "Nutritional deficiencies" = "#FF9600"), hjust = 0.5, size = 30, family = f1),
         axis.text.x = element_text(color = "white", hjust = 0.5, size = 30, family = f1),
-        axis.title.x = element_text(color = "white", hjust = 1, size = 31, family = f1, margin = margin(b = 0.5, t = 0.2, unit = "cm")),
+        axis.title.x = element_text(color = "white", hjust = 0.99, size = 31, family = f1, margin = margin(b = 0.5, t = 0.2, unit = "cm")),
         axis.line = element_line(color = "#0C475F")) +
-      ggtext::geom_textbox(aes(x = 5.1,
-                             y = 1.1),
-                         label = "Selected **<span style=\"color:#CC6633\">major global threats</span>** to Life Expectancy",
+      ggtext::geom_textbox(aes(x = 4.9,
+                             y = 1.3),
+                         label = "How does the threat from **<span style=\"color:#CC6633\">particle pollution</span>** compare with other global health threats?",
                          hjust = -0.005, halign = 0,
                          vjust = 1, valign = 1,
                          family = f1,
                          lineheight = 0.35,
-                         width = unit(17, "lines"),
-                         size = 28,
+                         width = unit(55, "lines"),
+                         size = 20,
                          box.colour = NA,
                          fill = NA,
                          color = "white") 
 # save plot
-ggsave(paste0(here(), "/output/pm2.5_compared_to_other_threats.png"), pm2.5_comparison_oth_threats_plt, width = 9.5, height = 5, dpi = 320)
+ggsave(paste0(here(), "/output/pm2.5_compared_to_other_threats.png"), pm2.5_comparison_oth_threats_plt, width = 16.5, height = 9, dpi = 320, scale = 2)
 
 
 
