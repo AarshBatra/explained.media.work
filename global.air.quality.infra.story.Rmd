@@ -229,7 +229,7 @@ pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
 #   geom_hline(mapping = aes(yintercept = 0.75), color = "#0C475F", linetype = "solid") +
 #   geom_hline(mapping = aes(yintercept = 1.25), color = "#0C475F", linetype = "solid") +
   geom_col(mapping = aes(fill = forcats::fct_reorder(lyl_bucket, order_lyl_bucket)), width = 0.4, color = "white") +
-  geom_text(aes(label = llpp_who_2021, y = (llpp_who_2021 - 0.085)), hjust = 0.1, color = "#663300", size = 10, family = f1, 
+  geom_text(aes(label = llpp_who_2021, y = (llpp_who_2021 - 0.085)), hjust = -0.2, color = "#663300", size = 10, family = f1, 
             fontface = "bold") +
   labs(x = "", y = "Life years lost", fill = "Life years lost", 
        title = expression("How does" ~ PM[2.5] ~ "compare with other heath threats?"), 
@@ -252,7 +252,7 @@ pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
         legend.text = element_text(color = "white", face = "bold" , size = 9),
         plot.background = element_rect(colour = "#022531",
                                        fill = "#022531"), 
-        plot.caption = element_text(size = 17, hjust = 0.5, color = "white"), 
+        plot.caption = element_text(size = 12, hjust = 0.5, color = "white"), 
         plot.title = element_text(size = 20, family = "Segoe UI", face = "bold", color = "white", hjust = -3.3, 
                                   margin = margin(b = 0, unit = "cm")),
         plot.subtitle = element_text(size = 11, family = "Segoe UI", face = "italic", color = "white", hjust = 0, 
@@ -267,9 +267,9 @@ pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
                                              "Transport injuries" = "#FFD25D", 
                                              "HIV/AIDS and sexually transmitted infections" = "#FFBA00", 
                                              "Neglected tropical diseases and malaria" = "#FF9600", 
-                                             "Nutritional deficiencies" = "#FF9600"), hjust = 0.5, size = 30, family = f1),
-        axis.text.x = element_text(color = "white", hjust = 0.5, size = 30, family = f1),
-        axis.title.x = element_text(color = "white", hjust = 0.99, size = 31, family = f1, margin = margin(b = 0.5, t = 0.2, unit = "cm")),
+                                             "Nutritional deficiencies" = "#FF9600"), hjust = 0.5, size = 20, family = f1),
+        axis.text.x = element_text(color = "white", hjust = 0.5, size = 20, family = f1),
+        axis.title.x = element_text(color = "white", hjust = 0.99, size = 21, family = f1, margin = margin(b = 0.5, t = 0.2, unit = "cm")),
         axis.line = element_line(color = "#0C475F")) +
       ggtext::geom_textbox(aes(x = 4.9,
                              y = 1.3),
@@ -279,14 +279,128 @@ pm2.5_comparison_oth_threats_plt <- pm2.5_comparison_oth_threats_data %>%
                          family = f1,
                          lineheight = 0.35,
                          width = unit(55, "lines"),
-                         size = 20,
+                         size = 15,
                          box.colour = NA,
                          fill = NA,
                          color = "white") 
 # save plot
-ggsave(paste0(here(), "/output/pm2.5_compared_to_other_threats.png"), pm2.5_comparison_oth_threats_plt, width = 16.5, height = 9, dpi = 320, scale = 2)
-
+ggsave(paste0(here(), "/output/linked_in_pm2.5_compared_to_other_threats.png"), pm2.5_comparison_oth_threats_plt, width = 11, height = 8, dpi = 320, scale = 2)
 
 
 ```
 
+# experiment
+```{r}
+
+# cartogram US state level-------------------------
+
+africa_countries <- gadm0_aqli_2021 %>% 
+  filter(continent == "Africa") %>%
+  select(country) %>%
+  as.vector() %>%
+  unlist()
+
+# US state level shapefile
+map_data <- gadm0_aqli_2021_shp %>%
+  filter(name0 %in% africa_countries) %>%
+  left_join(gadm0_aqli_2021 %>% filter(country %in% africa_countries), by = c("name0" = "country")) %>%
+  select(name0, population, pm2021, llpp_who_2021, llpp_nat_2021, geometry) %>%
+  mutate(pm2021 = pm2021*1000) %>%
+  st_as_sf() 
+
+map_data <- st_transform(map_data, crs = 7755)
+
+map_data$name1 <- as.factor(map_data$name1)
+map_data$pm2021 <- as.factor(map_data$pm2021)
+plt <- cartogram_cont(map_data, "pm2021")
+
+# json data ---------------------------------------
+
+#jsonlite geojsonio geojsonsf
+library(geojsonsf)
+install.packages("rjson")
+
+json_data_raw <- jsonlite::read_json("./id_1.json")
+
+# b1
+class(json_data_raw) # list
+json_data <- jsonlite::toJSON(json_data_raw)
+
+json_data_pretty <- jsonify::pretty_json(json_data)
+
+
+tmp <-geojson::as.geojson(json_data)
+class(tmp)
+geojsonio::geojson_write(tmp, "test4.geojson", geometry = "polygon", group = group)
+
+geojson_sf <- geojsonsf::geojson_sf(tmp)
+
+geojson_data <- geojsonio::geojson_read("myfile.geojson")
+
+
+tmp <- geojsonio::geojson_read("./gadm2.json")
+tmp_json <- jsonlite::toJSON(tmp)
+tmp1 <- geojsonio::geojson_json(tmp_json)
+
+
+
+
+
+
+
+
+
+
+jsonlite::write_json(x = json_data, path = "./id_1_updated.json")
+geojson_data <- geojsonio::file_to_geojson("id_1_updated.json", method = "local")
+
+# b2
+
+json_data_raw_df <- as.data.frame(tmp)
+
+# Create a simple feature with the geometry and data
+sf_feature <- st_sf(
+  geometry = st_sfc(st_as_text(json_data_raw$feature$geometry)),
+  data = data
+)
+
+gm <- st_as_sf(json_data_raw$feature$geometry)
+
+x <- gsub("\n", "", paste0('https://gist.githubusercontent.com/hunterowens/25ea24e198c80c9fbcc7/raw/7fd3efda9009f902b5a991a506cea52db19ba143/wards2014.json', collapse = ""))
+
+
+```
+
+
+
+```{r}
+
+epic_ind_df <- tibble(channel = c("Twitter", "Twitter", "LinkedIn", "LinkedIn"), month_year = c("June 2023", "Sept 2023", "June 2023", "Sept 2023"), followers =  c(2903, 2970, 7200, 8790))
+
+
+epic_ind_df %>%
+  ggplot(mapping = aes(x = month_year, y = followers)) +
+  geom_line(mapping = aes(color =  channel, group = channel), lwd = 1) +
+  scale_color_viridis(discrete = TRUE) +
+  labs(x = "Month/Year", y = "Followers", color = "", title = "EPIC India 3rd quarter follower growth") +
+  scale_y_continuous(breaks = seq(0, 9000, 1000), limits = c(0, 9000)) +
+  ggthemes::theme_clean() +
+  theme(axis.title.x = element_text(hjust = 1, margin = margin(t = 0.5, unit = "cm")), 
+        axis.title.y = element_text(hjust = 0.5, margin = margin(r = 0.5, unit = "cm")), 
+        legend.position = "bottom", 
+        plot.title = element_text(margin = margin(b = 0.5, unit = "cm"))) +
+  geom_text(mapping = aes(label = followers), size = 4, hjust = 1, vjust = 0.01)
+
+img <- epic_ind_df %>%
+  ggplot(mapping = aes(x = channel, y = followers)) +
+  geom_col(mapping = aes(fill =  month_year, group = month_year), position = "dodge", width = 0.5) +
+  scale_fill_viridis(discrete = TRUE) +
+  labs(x = "Channel", y = "Followers", fill = "", title = "EPIC India 3rd quarter follower growth") +
+  scale_y_continuous(breaks = seq(0, 9000, 1000), limits = c(0, 9000)) +
+  ggthemes::theme_clean() +
+  theme(axis.title.x = element_text(hjust = 1, margin = margin(t = 0.5, unit = "cm")), 
+        axis.title.y = element_text(hjust = 0.5, margin = margin(r = 0.5, unit = "cm")), 
+        legend.position = "bottom", 
+        plot.title = element_text(margin = margin(b = 0.5, unit = "cm"))) 
+
+```
